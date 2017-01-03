@@ -1,0 +1,38 @@
+public void createAlbumPhoto() {
+        MediaType mediaType = MediaType.parse("multipart/form-data");
+
+        Map<String, RequestBody> mapRequestBody = new HashMap<>();
+
+        int count = 0;//reset count value
+        for (PhotoItemModel item : adapter.getListData()) {
+            if (item.isLocal()) {
+                File file = new File(item.getImgPath());
+                int countTag = 0;
+                for (PhotoTagModel tag : item.getPhotoItemTags()) {
+                    mapRequestBody.put("images[" + (count) + "][tags][" + (countTag++) + "]", RequestBody.create(mediaType, String.valueOf(tag.getId())));
+                }
+                mapRequestBody.put("images[" + (count++) + "][file]\"; filename=\"" + file.getName() + "\"", RequestBody.create(mediaType, file));
+            }
+        }
+        mapRequestBody.put("album_name", RequestBody.create(mediaType, etEnterFolderName.getText().toString()));
+        mapRequestBody.put("is_public", RequestBody.create(mediaType, String.valueOf(switchPublish.isChecked() ? 1 : 0)));
+        mapRequestBody.put("public_date", RequestBody.create(mediaType, tvPublishDate.getText().toString()));
+        mapRequestBody.put("price", RequestBody.create(mediaType, tvPrice.getText().toString()));
+        showProgressBarDialog();
+        ApiClient.getClient().create(Api.class).createAlbumPhoto(mapRequestBody)
+                .enqueue(new MyCallback<UpdateResponse>() {
+                             @Override
+                             public void onHHSuccess(Response<UpdateResponse> response) {
+                                 Toast.makeText(AlbumCreateEditActivity.this, response.body().getMessages(), Toast.LENGTH_LONG).show();
+                                 dismissProgressBarDialog();
+                                 finishNewEditAlbum();
+                             }
+
+                             @Override
+                             public void onHHFailure(String message) {
+                                 dismissProgressBarDialog();
+                                 showDialogError(message);
+                             }
+                         }
+                );
+    }
